@@ -7,7 +7,7 @@
 <!-- Page Header -->
 <section class="bg-primary text-white py-5" style="margin-top: 80px;">
     <div class="container">
-        <h1 class="display-4 fw-bold">Layanan Kami</h1>
+        <h1 class="display-4 fw-bold">Layanan Kami test</h1>
         <p class="lead">Solusi lengkap untuk kebutuhan teknologi informasi Anda</p>
     </div>
 </section>
