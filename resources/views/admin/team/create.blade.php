@@ -1,0 +1,93 @@
+@extends('layouts.app')
+
+@section('title', 'Tambah Anggota Tim - Admin')
+
+@section('content')
+<section class="section-padding">
+    <div class="container">
+        <div class="mb-4">
+            <h1 class="section-title mb-0">Tambah Anggota Tim</h1>
+            <p class="section-subtitle">Isi data anggota tim yang akan ditampilkan di halaman Tentang Kami.</p>
+        </div>
+
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form action="{{ route('admin.team.store') }}" method="POST">
+            @csrf
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nama</label>
+                        <input type="text" name="name" id="name" class="form-control"
+                               value="{{ old('name') }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="position" class="form-label">Posisi</label>
+                        <input type="text" name="position" id="position" class="form-control"
+                               value="{{ old('position') }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="bio" class="form-label">Bio (opsional)</label>
+                        <textarea name="bio" id="bio" rows="4" class="form-control">{{ old('bio') }}</textarea>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="photo" class="form-label">Foto (path storage, opsional)</label>
+                        <input type="text" name="photo" id="photo" class="form-control"
+                               value="{{ old('photo') }}" placeholder="contoh: team/photo.jpg">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email (opsional)</label>
+                        <input type="email" name="email" id="email" class="form-control"
+                               value="{{ old('email') }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="linkedin" class="form-label">LinkedIn (opsional)</label>
+                        <input type="url" name="linkedin" id="linkedin" class="form-control"
+                               value="{{ old('linkedin') }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="twitter" class="form-label">Twitter (opsional)</label>
+                        <input type="url" name="twitter" id="twitter" class="form-control"
+                               value="{{ old('twitter') }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="order" class="form-label">Urutan</label>
+                        <input type="number" name="order" id="order" class="form-control"
+                               value="{{ old('order', 0) }}" min="0">
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input type="checkbox" name="is_active" id="is_active" class="form-check-input"
+                               {{ old('is_active', true) ? 'checked' : '' }}>
+                        <label for="is_active" class="form-check-label">Aktif</label>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ route('admin.team.index') }}" class="btn btn-outline-secondary">Batal</a>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+@endsection
+
