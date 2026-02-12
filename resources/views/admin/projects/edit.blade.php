@@ -39,7 +39,17 @@
     }
 
     .btn-delete-photo {
+        width: 38px;
+        height: 38px;
         border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .btn-delete-photo i {
+        font-size: 0.95rem;
     }
 
     .photo-help-text {
@@ -188,12 +198,17 @@
                             <div class="row g-3" id="existingPhotosGrid">
                                 @foreach($project->photos as $image)
                                     @if(in_array($image->id, $keptPhotoIds))
-                                        <div class="col-6 col-md-3 col-lg-2" data-existing-photo-card>
+                                        <div class="col-6 col-md-4 col-lg-3" data-existing-photo-card>
                                             <div class="card h-100 photo-card">
                                                 <img src="{{ asset('storage/' . $image->path) }}" class="card-img-top" alt="{{ $project->title }}">
                                                 <div class="card-body text-center p-2">
                                                     <input type="hidden" name="existing_photo_ids[]" value="{{ $image->id }}" data-existing-photo-input>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete-photo js-remove-existing-photo">Hapus</button>
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-danger btn-delete-photo js-remove-existing-photo"
+                                                            title="Tandai hapus"
+                                                            aria-label="Tandai hapus">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
