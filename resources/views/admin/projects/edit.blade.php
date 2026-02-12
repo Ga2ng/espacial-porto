@@ -197,8 +197,9 @@
         </form>
 
         @if($project->photos->count())
-            <div class="mt-4">
+            <div class="mt-4" id="currentPhotosSection">
                 <label class="form-label d-block">Foto Saat Ini</label>
+                <div id="photoDeleteFeedback" class="small mb-2 text-muted"></div>
                 <div class="row g-3">
                     @foreach($project->photos as $image)
                         <div class="col-6 col-md-3 col-lg-2">
@@ -207,7 +208,7 @@
                                 <div class="card-body text-center p-2">
                                     <form action="{{ route('admin.projects.images.destroy', [$project, $image]) }}"
                                           method="POST"
-                                          onsubmit="return confirm('Hapus foto ini?');">
+                                          class="js-delete-photo-form">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-danger btn-delete-photo">Hapus</button>
@@ -222,4 +223,77 @@
     </div>
 </section>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('submit', async function (event) {
+        const form = event.target;
+        if (!form.matches('.js-delete-photo-form')) {
+            return;
+        }
+
+        event.preventDefault();
+
+        if (!confirm('Hapus foto ini?')) {
+            return;
+        }
+
+        const button = form.querySelector('button[type="submit"]');
+        const card = form.closest('[data-photo-card]');
+        const feedback = document.getElementById('photoDeleteFeedback');
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const originalLabel = button ? button.textContent : 'Hapus';
+
+        if (button) {
+            button.disabled = true;
+            button.textContent = 'Menghapus...';
+        }
+
+        if (feedback) {
+            feedback.className = 'small mb-2 text-muted';
+            feedback.textContent = 'Memproses penghapusan foto...';
+        }
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                body: new FormData(form),
+            });
+
+            const contentType = response.headers.get('content-type') || '';
+            const isJson = contentType.includes('application/json');
+            const payload = isJson ? await response.json() : null;
+
+            if (!response.ok || !isJson || payload?.status !== 'ok') {
+                throw new Error(payload?.message || 'Gagal menghapus foto.');
+            }
+
+            if (card) {
+                card.remove();
+            }
+
+            if (feedback) {
+                feedback.className = 'small mb-2 text-success';
+                feedback.textContent = payload.message || 'Foto berhasil dihapus.';
+            }
+        } catch (error) {
+            if (feedback) {
+                feedback.className = 'small mb-2 text-danger';
+                feedback.textContent = 'Gagal menghapus foto. Muat ulang halaman lalu coba lagi.';
+            }
+
+            if (button) {
+                button.disabled = false;
+                button.textContent = originalLabel;
+            }
+        }
+    });
+</script>
+@endpush
 
