@@ -124,29 +124,6 @@
                         <input type="file" name="photos[]" id="photos" class="form-control" accept="image/*" multiple>
                     </div>
 
-                    @if($project->photos->count())
-                        <div class="mb-3">
-                            <label class="form-label d-block">Foto Saat Ini</label>
-                            <div class="row g-3">
-                                @foreach($project->photos as $image)
-                                    <div class="col-6 col-md-4">
-                                        <div class="card">
-                                            <img src="{{ asset('storage/' . $image->path) }}" class="card-img-top" alt="{{ $project->title }}">
-                                            <div class="card-body text-center">
-                                                <form action="{{ route('admin.projects.images.destroy', [$project, $image]) }}" method="POST"
-                                                      onsubmit="return confirm('Hapus foto ini?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-
                     <div class="mb-3">
                         <label for="order" class="form-label">Urutan</label>
                         <input type="number" name="order" id="order" class="form-control"
@@ -172,6 +149,29 @@
                 </div>
             </div>
         </form>
+
+        @if($project->photos->count())
+            <div class="mt-4">
+                <label class="form-label d-block">Foto Saat Ini</label>
+                <div class="row g-3">
+                    @foreach($project->photos as $image)
+                        <div class="col-6 col-md-3 col-lg-2">
+                            <div class="card h-100">
+                                <img src="{{ asset('storage/' . $image->path) }}" class="card-img-top" alt="{{ $project->title }}">
+                                <div class="card-body text-center p-2">
+                                    <form action="{{ route('admin.projects.images.destroy', [$project, $image]) }}" method="POST"
+                                          onsubmit="return confirm('Hapus foto ini?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
     </div>
 </section>
 @endsection

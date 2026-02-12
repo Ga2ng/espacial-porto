@@ -44,6 +44,7 @@ class ProjectAdminController extends Controller
             'category' => ['required', 'string', 'max:255'],
             'client_id' => ['required', 'exists:clients,id'],
             'project_url' => ['nullable', 'string', 'max:255'],
+            'order' => ['nullable', 'integer', 'min:0'],
             'video' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/quicktime', 'max:102400'],
             'photos' => ['nullable', 'array'],
             'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
