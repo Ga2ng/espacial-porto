@@ -41,6 +41,11 @@
     .btn-delete-photo {
         border-radius: 999px;
     }
+
+    .photo-help-text {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
 </style>
 @endpush
 
@@ -169,6 +174,36 @@
                         <input type="file" name="photos[]" id="photos" class="form-control" accept="image/*" multiple>
                     </div>
 
+                    @php
+                        $oldPhotoStateSubmitted = old('existing_photo_ids_present') !== null;
+                        $keptPhotoIds = $oldPhotoStateSubmitted
+                            ? collect(old('existing_photo_ids', []))->map(fn($id) => (int) $id)->all()
+                            : $project->photos->pluck('id')->map(fn($id) => (int) $id)->all();
+                    @endphp
+                    @if($project->photos->count())
+                        <div class="mb-3">
+                            <input type="hidden" name="existing_photo_ids_present" value="1">
+                            <label class="form-label d-block">Foto Saat Ini</label>
+                            <p class="photo-help-text mb-2">Klik Hapus untuk menandai foto dihapus. Perubahan diterapkan saat tombol <strong>Simpan Perubahan</strong> ditekan.</p>
+                            <div class="row g-3" id="existingPhotosGrid">
+                                @foreach($project->photos as $image)
+                                    @if(in_array($image->id, $keptPhotoIds))
+                                        <div class="col-6 col-md-3 col-lg-2" data-existing-photo-card>
+                                            <div class="card h-100 photo-card">
+                                                <img src="{{ asset('storage/' . $image->path) }}" class="card-img-top" alt="{{ $project->title }}">
+                                                <div class="card-body text-center p-2">
+                                                    <input type="hidden" name="existing_photo_ids[]" value="{{ $image->id }}" data-existing-photo-input>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-delete-photo js-remove-existing-photo">Hapus</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                            <p id="existingPhotosEmptyNote" class="photo-help-text mt-2 d-none">Semua foto ditandai untuk dihapus saat simpan perubahan.</p>
+                        </div>
+                    @endif
+
                     <div class="mb-3">
                         <label for="order" class="form-label">Urutan</label>
                         <input type="number" name="order" id="order" class="form-control"
@@ -195,31 +230,31 @@
                 </div>
             </div>
         </form>
-
-        @if($project->photos->count())
-            <div class="mt-4" id="currentPhotosSection">
-                <label class="form-label d-block">Foto Saat Ini</label>
-                <div class="row g-3">
-                    @foreach($project->photos as $image)
-                        <div class="col-6 col-md-3 col-lg-2">
-                            <div class="card h-100 photo-card">
-                                <img src="{{ asset('storage/' . $image->path) }}" class="card-img-top" alt="{{ $project->title }}">
-                                <div class="card-body text-center p-2">
-                                    <form action="{{ route('admin.projects.images.destroy', ['project' => $project->id, 'image' => $image->id]) }}"
-                                          method="POST"
-                                          onsubmit="return confirm('Hapus foto ini?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger btn-delete-photo">Hapus</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        @endif
     </div>
 </section>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('click', function (event) {
+        const btn = event.target.closest('.js-remove-existing-photo');
+        if (!btn) return;
+
+        const card = btn.closest('[data-existing-photo-card]');
+        if (!card) return;
+
+        if (!confirm('Tandai foto ini untuk dihapus saat simpan perubahan?')) {
+            return;
+        }
+
+        card.remove();
+
+        const remaining = document.querySelectorAll('[data-existing-photo-card]').length;
+        const emptyNote = document.getElementById('existingPhotosEmptyNote');
+        if (emptyNote) {
+            emptyNote.classList.toggle('d-none', remaining > 0);
+        }
+    });
+</script>
+@endpush
 

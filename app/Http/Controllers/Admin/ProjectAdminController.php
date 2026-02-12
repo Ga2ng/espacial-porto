@@ -48,6 +48,8 @@ class ProjectAdminController extends Controller
             'video' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/quicktime', 'max:102400'],
             'photos' => ['nullable', 'array'],
             'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'existing_photo_ids' => ['nullable', 'array'],
+            'existing_photo_ids.*' => ['integer'],
             'tools' => ['nullable', 'array'],
             'tools.*' => ['integer', 'exists:tools,id'],
         ]);
@@ -137,6 +139,24 @@ class ProjectAdminController extends Controller
         $project->update($data);
 
         $project->tools()->sync($request->input('tools', []));
+
+        // Hapus foto lama yang ditandai hilang dari form edit.
+        $keptPhotoIds = collect($request->input('existing_photo_ids', []))
+            ->map(fn($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $photosToDelete = $keptPhotoIds->isEmpty()
+            ? $project->photos()->get()
+            : $project->photos()->whereNotIn('id', $keptPhotoIds)->get();
+
+        foreach ($photosToDelete as $photo) {
+            if ($photo->path) {
+                Storage::disk('public')->delete($photo->path);
+            }
+            $photo->delete();
+        }
 
         if ($request->hasFile('photos')) {
             $startOrder = (int) ($project->photos()->max('order') ?? 0) + 1;
