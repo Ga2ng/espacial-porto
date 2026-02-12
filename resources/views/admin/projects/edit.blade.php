@@ -2,9 +2,51 @@
 
 @section('title', 'Edit Proyek - Admin')
 
+@push('styles')
+<style>
+    .edit-project-shell .edit-panel {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+        padding: 1.25rem;
+    }
+
+    .edit-project-shell .form-label {
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+    }
+
+    .edit-project-shell .form-control,
+    .edit-project-shell .form-select {
+        border-radius: 12px;
+    }
+
+    .tools-box {
+        max-height: 220px;
+        overflow-y: auto;
+        border-radius: 12px;
+    }
+
+    .photo-card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .photo-card img {
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+    }
+
+    .btn-delete-photo {
+        border-radius: 999px;
+    }
+</style>
+@endpush
+
 @section('content')
 <section class="section-padding">
-    <div class="container">
+    <div class="container edit-project-shell">
         <div class="mb-4">
             <h1 class="section-title mb-0">Edit Proyek</h1>
             <p class="section-subtitle">Perbarui data proyek yang tampil di landing page.</p>
@@ -26,6 +68,7 @@
 
             <div class="row">
                 <div class="col-md-8">
+                    <div class="edit-panel">
                     <div class="mb-3">
                         <label for="title" class="form-label">Judul Proyek</label>
                         <input type="text" name="title" id="title" class="form-control"
@@ -47,9 +90,11 @@
                         <label for="content" class="form-label">Deskripsi Lengkap (opsional)</label>
                         <textarea name="content" id="content" rows="6" class="form-control">{{ old('content', $project->content) }}</textarea>
                     </div>
+                    </div>
                 </div>
 
                 <div class="col-md-4">
+                    <div class="edit-panel">
                     <div class="mb-3">
                         <label for="category" class="form-label">Kategori (Layanan)</label>
                         <select name="category" id="category" class="form-control" required>
@@ -87,7 +132,7 @@
 
                     <div class="mb-3">
                         <label class="form-label d-block">Tools / Framework yang Digunakan</label>
-                        <div class="border rounded p-3" style="max-height: 220px; overflow-y: auto;">
+                        <div class="border rounded p-3 tools-box">
                             @forelse($tools as $tool)
                                 <div class="form-check">
                                     @php $checked = in_array($tool->id, old('tools', $project->tools->pluck('id')->toArray())); @endphp
@@ -146,6 +191,7 @@
                         <a href="{{ route('admin.projects.index') }}" class="btn btn-outline-secondary">Batal</a>
                         <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
                     </div>
+                    </div>
                 </div>
             </div>
         </form>
@@ -156,14 +202,15 @@
                 <div class="row g-3">
                     @foreach($project->photos as $image)
                         <div class="col-6 col-md-3 col-lg-2">
-                            <div class="card h-100">
+                            <div class="card h-100 photo-card" data-photo-card>
                                 <img src="{{ asset('storage/' . $image->path) }}" class="card-img-top" alt="{{ $project->title }}">
                                 <div class="card-body text-center p-2">
-                                    <form action="{{ route('admin.projects.images.destroy', [$project, $image]) }}" method="POST"
-                                          onsubmit="return confirm('Hapus foto ini?');">
+                                    <form action="{{ route('admin.projects.images.destroy', [$project, $image]) }}"
+                                          method="POST"
+                                          class="js-delete-photo-form">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                        <button type="submit" class="btn btn-sm btn-danger btn-delete-photo">Hapus</button>
                                     </form>
                                 </div>
                             </div>
@@ -175,4 +222,52 @@
     </div>
 </section>
 @endsection
+
+@push('scripts')
+<script>
+    document.querySelectorAll('.js-delete-photo-form').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            if (!confirm('Hapus foto ini?')) {
+                return;
+            }
+
+            const button = form.querySelector('button[type="submit"]');
+            const card = form.closest('[data-photo-card]');
+            const originalText = button ? button.textContent : '';
+
+            try {
+                if (button) {
+                    button.disabled = true;
+                    button.textContent = 'Menghapus...';
+                }
+
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    body: new FormData(form),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Gagal menghapus foto');
+                }
+
+                if (card) {
+                    card.remove();
+                }
+            } catch (error) {
+                alert('Gagal menghapus foto. Coba lagi.');
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            }
+        });
+    });
+</script>
+@endpush
 
