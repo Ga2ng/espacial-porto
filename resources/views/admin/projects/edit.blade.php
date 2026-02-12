@@ -207,7 +207,7 @@
                                 <div class="card-body text-center p-2">
                                     <form action="{{ route('admin.projects.images.destroy', [$project, $image]) }}"
                                           method="POST"
-                                          class="js-delete-photo-form">
+                                          onsubmit="return confirm('Hapus foto ini?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-danger btn-delete-photo">Hapus</button>
@@ -222,52 +222,4 @@
     </div>
 </section>
 @endsection
-
-@push('scripts')
-<script>
-    document.querySelectorAll('.js-delete-photo-form').forEach((form) => {
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            if (!confirm('Hapus foto ini?')) {
-                return;
-            }
-
-            const button = form.querySelector('button[type="submit"]');
-            const card = form.closest('[data-photo-card]');
-            const originalText = button ? button.textContent : '';
-
-            try {
-                if (button) {
-                    button.disabled = true;
-                    button.textContent = 'Menghapus...';
-                }
-
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json',
-                    },
-                    body: new FormData(form),
-                });
-
-                if (!response.ok) {
-                    throw new Error('Gagal menghapus foto');
-                }
-
-                if (card) {
-                    card.remove();
-                }
-            } catch (error) {
-                alert('Gagal menghapus foto. Coba lagi.');
-                if (button) {
-                    button.disabled = false;
-                    button.textContent = originalText;
-                }
-            }
-        });
-    });
-</script>
-@endpush
 
