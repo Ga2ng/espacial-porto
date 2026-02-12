@@ -184,15 +184,8 @@ class ProjectAdminController extends Controller
 
         $image->delete();
 
-        if ($request->expectsJson() || $request->ajax()) {
-            return response()->json([
-                'status' => 'ok',
-                'message' => 'Gambar proyek berhasil dihapus.',
-            ]);
-        }
-
         return redirect()
-            ->route('admin.projects.edit', $project)
+            ->route('admin.projects.edit', $project->id)
             ->with('status', 'Gambar proyek berhasil dihapus.');
     }
 }

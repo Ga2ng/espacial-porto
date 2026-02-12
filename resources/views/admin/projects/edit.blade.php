@@ -199,16 +199,15 @@
         @if($project->photos->count())
             <div class="mt-4" id="currentPhotosSection">
                 <label class="form-label d-block">Foto Saat Ini</label>
-                <div id="photoDeleteFeedback" class="small mb-2 text-muted"></div>
                 <div class="row g-3">
                     @foreach($project->photos as $image)
                         <div class="col-6 col-md-3 col-lg-2">
-                            <div class="card h-100 photo-card" data-photo-card>
+                            <div class="card h-100 photo-card">
                                 <img src="{{ asset('storage/' . $image->path) }}" class="card-img-top" alt="{{ $project->title }}">
                                 <div class="card-body text-center p-2">
-                                    <form action="{{ route('admin.projects.images.destroy', [$project, $image]) }}"
+                                    <form action="{{ route('admin.projects.images.destroy', ['project' => $project->id, 'image' => $image->id]) }}"
                                           method="POST"
-                                          class="js-delete-photo-form">
+                                          onsubmit="return confirm('Hapus foto ini?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-danger btn-delete-photo">Hapus</button>
@@ -223,87 +222,4 @@
     </div>
 </section>
 @endsection
-
-@push('scripts')
-<script>
-    document.addEventListener('submit', async function (event) {
-        const form = event.target.closest('.js-delete-photo-form');
-        if (!form) {
-            return;
-        }
-
-        // Jika fallback submit biasa dipaksa, jangan intercept lagi.
-        if (form.dataset.skipAjax === '1') {
-            return;
-        }
-
-        event.preventDefault();
-
-        if (!confirm('Hapus foto ini?')) {
-            return;
-        }
-
-        const button = form.querySelector('button[type="submit"]');
-        const card = form.closest('[data-photo-card]');
-        const feedback = document.getElementById('photoDeleteFeedback');
-        const csrfTokenInput = form.querySelector('input[name="_token"]');
-        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-        const csrfToken = (csrfTokenInput && csrfTokenInput.value) || (csrfMeta && csrfMeta.getAttribute('content')) || '';
-        const originalLabel = button ? button.textContent : 'Hapus';
-
-        if (button) {
-            button.disabled = true;
-            button.textContent = 'Menghapus...';
-        }
-
-        if (feedback) {
-            feedback.className = 'small mb-2 text-muted';
-            feedback.textContent = 'Memproses penghapusan foto...';
-        }
-
-        try {
-            const body = new URLSearchParams(new FormData(form));
-
-            const response = await fetch(form.action, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                },
-                body: body.toString(),
-            });
-
-            const contentType = response.headers.get('content-type') || '';
-            const isJson = contentType.includes('application/json');
-            const payload = isJson ? await response.json() : null;
-
-            if (!response.ok || !isJson || payload?.status !== 'ok') {
-                throw new Error(payload?.message || 'Gagal menghapus foto.');
-            }
-
-            if (card) {
-                card.remove();
-            }
-
-            if (feedback) {
-                feedback.className = 'small mb-2 text-success';
-                feedback.textContent = payload.message || 'Foto berhasil dihapus.';
-            }
-        } catch (error) {
-            // Fallback aman untuk production: pakai submit normal Laravel
-            // agar foto tetap terhapus meskipun AJAX diblokir hosting/proxy.
-            if (feedback) {
-                feedback.className = 'small mb-2 text-warning';
-                feedback.textContent = 'Koneksi AJAX gagal, mencoba mode standar...';
-            }
-            form.dataset.skipAjax = '1';
-            form.submit();
-            return;
-        }
-    });
-</script>
-@endpush
 
