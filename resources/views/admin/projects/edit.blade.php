@@ -227,8 +227,13 @@
 @push('scripts')
 <script>
     document.addEventListener('submit', async function (event) {
-        const form = event.target;
-        if (!form.matches('.js-delete-photo-form')) {
+        const form = event.target.closest('.js-delete-photo-form');
+        if (!form) {
+            return;
+        }
+
+        // Jika fallback submit biasa dipaksa, jangan intercept lagi.
+        if (form.dataset.skipAjax === '1') {
             return;
         }
 
@@ -241,7 +246,9 @@
         const button = form.querySelector('button[type="submit"]');
         const card = form.closest('[data-photo-card]');
         const feedback = document.getElementById('photoDeleteFeedback');
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const csrfTokenInput = form.querySelector('input[name="_token"]');
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = (csrfTokenInput && csrfTokenInput.value) || (csrfMeta && csrfMeta.getAttribute('content')) || '';
         const originalLabel = button ? button.textContent : 'Hapus';
 
         if (button) {
@@ -255,15 +262,18 @@
         }
 
         try {
+            const body = new URLSearchParams(new FormData(form));
+
             const response = await fetch(form.action, {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                     'X-CSRF-TOKEN': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json',
                 },
-                body: new FormData(form),
+                body: body.toString(),
             });
 
             const contentType = response.headers.get('content-type') || '';
@@ -283,15 +293,15 @@
                 feedback.textContent = payload.message || 'Foto berhasil dihapus.';
             }
         } catch (error) {
+            // Fallback aman untuk production: pakai submit normal Laravel
+            // agar foto tetap terhapus meskipun AJAX diblokir hosting/proxy.
             if (feedback) {
-                feedback.className = 'small mb-2 text-danger';
-                feedback.textContent = 'Gagal menghapus foto. Muat ulang halaman lalu coba lagi.';
+                feedback.className = 'small mb-2 text-warning';
+                feedback.textContent = 'Koneksi AJAX gagal, mencoba mode standar...';
             }
-
-            if (button) {
-                button.disabled = false;
-                button.textContent = originalLabel;
-            }
+            form.dataset.skipAjax = '1';
+            form.submit();
+            return;
         }
     });
 </script>
